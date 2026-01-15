@@ -3,7 +3,8 @@ from sqlalchemy.orm import Session
 import httpx
 
 from app.database import get_db
-from app.models import City
+from app.models import City, Temperature
+from app.schemas import TemperatureList
 import app.crud as crud
 
 router = APIRouter(prefix="/temperatures", tags=["Temperatures"])
@@ -40,7 +41,14 @@ async def update_temperatures(db: Session = Depends(get_db)):
             weather_response.raise_for_status()
 
             temperature = weather_response.json()["current_weather"]["temperature"]
-
             crud.create_temperature(db, city.id, temperature)
 
     return {"detail": "Temperatures updated successfully"}
+
+
+@router.get("/", response_model=list[TemperatureList])
+def get_temperatures(
+    city_id: int | None = None,
+    db: Session = Depends(get_db)
+):
+    return crud.get_temperatures(db, city_id)
